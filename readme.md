@@ -1,4 +1,4 @@
-# **Sobel Edge Detection Accelerator on FPGA (Verilog & Python)**
+# **Sobel Edge Detection**
 
 This project implements a hardware-accelerated Sobel edge detection pipeline using Verilog, designed for synthesis on an FPGA. A Python script is provided to handle the full workflow: preparing a test image, running the Verilog simulation, and validating the results against an OpenCV reference implementation.
 
