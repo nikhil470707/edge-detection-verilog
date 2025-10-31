@@ -9,7 +9,6 @@ module sobel_core (
 
     // Internal wires for signed calculations to prevent overflow.
     // The maximum possible value for Gx or Gy is 4 * 255 = 1020, so 11 bits are needed.
-    // We use a safe bit width of 16 for all intermediate calculations.
     wire signed [15:0] Gx, Gy;
     wire signed [15:0] Gx_abs, Gy_abs;
 
