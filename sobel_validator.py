@@ -3,7 +3,6 @@ import numpy as np
 import subprocess
 import matplotlib.pyplot as plt
 
-# --- CONFIGURATION ---
 IMAGE_PATH = 'test_image.png'
 IMAGE_SIZE = (128, 128) # Must match IMAGE_WIDTH and IMAGE_HEIGHT in Verilog testbench
 MEM_FILE_OUT = 'input_pixels.mem'
@@ -16,7 +15,6 @@ VERILOG_MODULES = [
 ]
 
 def preprocess_image(image_path, size):
-    """Reads and resizes an image, converts to grayscale, and saves to a .mem file."""
     try:
         img = cv2.imread(image_path)
         if img is None:
@@ -40,7 +38,6 @@ def preprocess_image(image_path, size):
         return None, None
 
 def run_verilog_simulation():
-    """Compiles and runs the Verilog simulation using Icarus Verilog."""
     print("Running Verilog simulation...")
     command = ['iverilog', '-o', 'sobel_sim', VERILOG_TOP] + VERILOG_MODULES
     
@@ -62,7 +59,7 @@ def run_verilog_simulation():
     return True
 
 def postprocess_output(size):
-    """Reads the simulation output, reconstructs the image, and validates it."""
+    # Reads the simulation output, reconstructs the image, and validates it
     try:
         with open(SIM_OUTPUT_FILE, 'r') as f:
             output_pixels = [int(line.strip(), 16) for line in f]
@@ -70,14 +67,11 @@ def postprocess_output(size):
         # Reshape the 1D list of pixels into a 2D image array
         output_array = np.array(output_pixels, dtype=np.uint8)
         
-        # The first few pixels of output are not valid due to the pipeline
-        # We need to reshape the data, leaving out the initial padding
         verilog_img = np.zeros(size, dtype=np.uint8)
-        # The number of invalid pixels is 2 rows + 2 pixels per row
         invalid_pixels = 2 * size[0] + 2
         valid_pixels = output_array[invalid_pixels:]
         
-        # Pad the output image with black borders to match the original size
+        # Padding
         verilog_img[2:size[0], 2:size[1]] = valid_pixels.reshape((size[0]-2, size[1]-2))
 
         return verilog_img
@@ -86,7 +80,7 @@ def postprocess_output(size):
         return None
 
 def calculate_metrics(img1, img2):
-    """Calculates Mean Squared Error (MSE) and Peak Signal-to-Noise Ratio (PSNR)."""
+    # Calculates Mean Squared Error (MSE) and Peak Signal-to-Noise Ratio (PSNR)
     h, w = img1.shape
     diff = cv2.absdiff(img1.astype(float), img2.astype(float))
     mse = np.sum(diff**2) / (h * w)
@@ -94,7 +88,6 @@ def calculate_metrics(img1, img2):
     return mse, psnr
 
 def main():
-    """Main function to orchestrate the entire workflow."""
     original_img, color_img = preprocess_image(IMAGE_PATH, IMAGE_SIZE)
     if original_img is None:
         return
@@ -107,13 +100,12 @@ def main():
         return
 
     # Calculate ground truth with OpenCV's Sobel
-    # We use a 3x3 kernel size.
+
     sobel_x = cv2.Sobel(original_img, cv2.CV_64F, 1, 0, ksize=3)
     sobel_y = cv2.Sobel(original_img, cv2.CV_64F, 0, 1, ksize=3)
     
     # Calculate magnitude: sqrt(sobel_x**2 + sobel_y**2)
-    # The verilog design uses |Gx| + |Gy|
-    # For a fair comparison, we will also use the Manhattan distance
+
     opencv_sobel = cv2.add(cv2.convertScaleAbs(sobel_x), cv2.convertScaleAbs(sobel_y))
     
     # Compare the two images
